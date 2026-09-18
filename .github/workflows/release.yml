@@ -26,7 +26,7 @@ jobs:
         id: pack
         uses: wdssmq/zbp-app-pack@v1
         with:
-          path: './zb_users/plugin/UEditor'
+          path: './UEditor'
           gzip: 'true'
           verbose: 'false'
 

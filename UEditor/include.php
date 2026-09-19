@@ -10,6 +10,7 @@ function ActivePlugin_UEditor()
     Add_Filter_Plugin('Filter_Plugin_Edit_Begin', 'ueditor_addscript_begin');
     Add_Filter_Plugin('Filter_Plugin_Edit_End', 'ueditor_addscript_end');
     Add_Filter_Plugin('Filter_Plugin_Html_Js_Add', 'ueditor_SyntaxHighlighter_print');
+    Add_Filter_Plugin('Filter_Plugin_Cmd_Ajax', 'UEditor_CmdAjax');
 }
 
 function ueditor_SyntaxHighlighter_print()
@@ -18,111 +19,90 @@ function ueditor_SyntaxHighlighter_print()
     if (!$zbp->option['ZC_SYNTAXHIGHLIGHTER_ENABLE']) {
         return;
     }
+    $tpl =<<<html
+<script src="{$zbp->host}zb_users/plugin/UEditor/third-party/prism/prism.js"><\\/script><link href="{$zbp->host}zb_users/plugin/UEditor/third-party/prism/prism.css"/>
+html;
 
-    echo "\r\n" . 'document.writeln("<script src=\'' . $zbp->host . 'zb_users/plugin/UEditor/third-party/prism/prism.js\' type=\'text/javascript\'><\/script><link rel=\'stylesheet\' type=\'text/css\' href=\'' . $zbp->host . 'zb_users/plugin/UEditor/third-party/prism/prism.css\'/>");';
+    echo "\r\n";
+    echo "document.writeln('{$tpl}');";
+    echo "\r\n";
+
     echo '$(function(){var compatibility={as3:"actionscript","c#":"csharp",delphi:"pascal",html:"markup",xml:"markup",vb:"basic",js:"javascript",plain:"markdown",pl:"perl",ps:"powershell"};var runFunction=function(doms,callback){doms.each(function(index,unwrappedDom){var dom=$(unwrappedDom);var codeDom=$("<code>");if(callback)callback(dom);var languageClass="prism-language-"+function(classObject){if(classObject===null)return"markdown";var className=classObject[1];return compatibility[className]?compatibility[className]:className}(dom.attr("class").match(/prism-language-([0-9a-zA-Z]+)/));codeDom.html(dom.html()).addClass("prism-line-numbers").addClass(languageClass);dom.html("").addClass(languageClass).append(codeDom)})};runFunction($("pre.prism-highlight"));runFunction($(\'pre[class*="brush:"]\'),function(preDom){var original;if((original=preDom.attr("class").match(/brush:([a-zA-Z0-9\#]+);/))!==null){preDom.get(0).className="prism-highlight prism-language-"+original[1]}});Prism.highlightAll()});';
     echo "\r\n";
 }
 
-function InstallPlugin_UEditor()
-{
-}
+function InstallPlugin_UEditor() {}
 
-function UninstallPlugin_UEditor()
-{
-}
+function UninstallPlugin_UEditor() {}
 
 function ueditor_addscript_begin()
 {
     global $zbp;
-    echo '<script type="text/javascript" src="' . $zbp->host . 'zb_users/plugin/UEditor/ueditor.config.php"></script>';
-    echo '<script type="text/javascript" src="' . $zbp->host . 'zb_users/plugin/UEditor/ueditor.all.min.js"></script>';
-    echo '<style type="text/css">#editor_content{height:auto}</style>';
+    $config_url = $zbp->host . 'zb_system/cmd.php?act=ajax&src=UEditor';
+    echo '<script src="' . UEditor_Path('ueditor.config.js', 'host') . '"></script>';
+    echo '<script>
+        (function(){
+            window.UEDITOR_CONFIG_URL = "' . $config_url . '";
+        })();
+    </script>';
+    echo '<script src="' . UEditor_Path('ueditor.all.min.js', 'host') . '"></script>';
+    // echo '<style type="text/css">#editor_content{height:auto}</style>';
+}
+
+function UEditor_CmdAjax($src)
+{
+    global $zbp;
+    if ('UEditor' !== $src) {
+        return;
+    }
+
+    $URL = $zbp->host . 'zb_users/plugin/UEditor/';
+    $lang = strtolower($zbp->lang['lang']);
+    if (!is_dir(__DIR__ . '/lang/' . $lang)) {
+        $lang = 'zh-cn';
+    }
+
+    $has_insertcode = !empty($zbp->option['ZC_SYNTAXHIGHLIGHTER_ENABLE']);
+
+    $config = array(
+        'UEDITOR_HOME_URL' => $URL,
+        'serverUrl'        => $URL . 'php/controller.php',
+        'toolbars'         => array(
+            array('source', '|', 'undo', 'redo', '|', 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'forecolor', 'backcolor', '|', 'insertorderedlist', 'insertunorderedlist', 'indent', 'justifyleft', 'justifycenter', 'justifyright', '|', 'removeformat', 'formatmatch', 'autotypeset', 'pasteplain'),
+            array_merge(
+                array('paragraph', 'fontfamily', 'fontsize', '|', 'emotion', 'link', 'insertimage', 'scrawl', 'insertvideo', 'attachment', 'spechars', 'map', '|'),
+                $has_insertcode ? array('insertcode') : array(),
+                array('blockquote', 'wordimage', 'inserttable', 'horizontal', 'fullscreen')
+            )
+        ),
+        'sourceEditor'           => !empty($zbp->option['ZC_CODEMIRROR_ENABLE']) ? 'codemirror' : 'textarea',
+        'initialStyle'           => 'body{font-size:14px;font-family:微软雅黑，宋体，Arial,Helvetica,sans-serif;}',
+        'imageMaxSize'           => $zbp->option['ZC_UPLOAD_FILESIZE'] * 1024 * 1024,
+        'fileMaxSize'            => $zbp->option['ZC_UPLOAD_FILESIZE'] * 1024 * 1024,
+        'lang'                   => $lang,
+        'langPath'               => $URL . 'lang/',
+    );
+
+    JsonReturn($config);
 }
 
 function ueditor_addscript_end()
 {
+    echo '<script src="' . UEditor_Path('script', 'host') . '"></script>';
+}
+
+function UEditor_Path($file, $t = 'path')
+{
     global $zbp;
+    $result = $zbp->{$t} . 'zb_users/plugin/UEditor/';
 
-    $s = <<<'js'
-<script type="text/javascript">
+    switch ($file) {
+        case 'script':
+            return $result . 'script/script.js';
 
-var EditorIntroOption = {
-	toolbars:[['Source', 'bold', 'italic','link','insertimage','Undo', 'Redo']],
-	autoHeightEnabled:false,
-	initialFrameHeight:200
-}
+            break;
 
-
-function getContent(){
-  return editor_api.editor.content.get();
-}
-
-function getIntro(){
-  return editor_api.editor.intro.get();
-}
-
-function setContent(s){
-	editor_api.editor.content.put(s);
-}
-
-function setIntro(s){
-  editor_api.editor.intro.put(s);
-}
-
-function editor_init(){
-
-    function addButton(id){
-        var s=this;
-        UE.registerUI(s.name, function(editor, uiName) {
-            return new UE.ui.Button({
-                name: uiName,
-                title: uiName,
-                cssRules: "background: rgba(0, 0, 0, 0) url("+s.icon+") no-repeat center / 16px 16px !important;",
-                onclick: function() {
-                    s.callback.call(editor)
-                }
-            });
-        },void 0,id);
+        default:
+            return $result . $file;
     }
-    
-    typeof contentBarBtn === 'undefined' || $.each(contentBarBtn, function(index, obj){
-        UEDITOR_CONFIG["toolbars"][0].push(obj.name);
-        addButton.call(obj,'editor_content');
-    })
-    
-    typeof introBarBtn === 'undefined' || $.each(introBarBtn, function(index, obj){
-        EditorIntroOption.toolbars[0].push(obj.name);
-        addButton.call(obj,'editor_intro');
-    })
-        
-    editor_api.editor.content.obj=UE.getEditor('editor_content');
-    editor_api.editor.intro.obj=UE.getEditor('editor_intro',EditorIntroOption);
-    editor_api.editor.content.get=function(){return this.obj.getContent()};
-    editor_api.editor.content.put=function(str){return this.obj.setContent(str)};
-    editor_api.editor.content.focus=function(){return this.obj.focus()};
-    editor_api.editor.content.insert=function(str){return this.obj.execCommand("insertHtml", str)};
-    editor_api.editor.intro.get=function(){return this.obj.getContent()};
-    editor_api.editor.intro.put=function(str){return this.obj.setContent(str)};
-    editor_api.editor.intro.focus=function(){return this.obj.focus()};
-    editor_api.editor.intro.insert=function(str){return this.obj.execCommand("insertHtml", str)};
-    
-    
-    editor_api.editor.content.obj.ready(function(){sContent=editor_api.editor.content.get();});
-    editor_api.editor.intro.obj.ready(function(){sIntro=editor_api.editor.intro.get();});
-    
-    $(document).ready(function(){
-    	$('#edit').submit(function(){if(editor_api.editor.content.obj.queryCommandState('source')==1) editor_api.editor.content.obj.execCommand('source');
-    	if(editor_api.editor.intro.obj.queryCommandState('source')==1) editor_api.editor.intro.obj.execCommand('source');})
-    	/*源码模式下保存时必须切换*/
-    
-    
-    	if (bloghost != "/" && (bloghost).indexOf(location.host.toLowerCase()) < 0)
-    		alert("您设置了域名固化，请使用" + bloghost + "访问或进入后台修改域名，否则图片无法上传。");
-    });
-
-}
-</script>
-js;
-    echo $s;
 }

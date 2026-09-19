@@ -3,7 +3,7 @@
 //ZBP的第一个插件，ueditor插件
 
 //注册插件
-RegisterPlugin("UEditor", "ActivePlugin_UEditor");
+RegisterPlugin('UEditor', 'ActivePlugin_UEditor');
 
 function ActivePlugin_UEditor()
 {
@@ -44,7 +44,7 @@ function ueditor_addscript_end()
 {
     global $zbp;
 
-    $s = <<<js
+    $s = <<<'js'
 <script type="text/javascript">
 
 var EditorIntroOption = {

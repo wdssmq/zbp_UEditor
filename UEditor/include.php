@@ -19,7 +19,7 @@ function ueditor_SyntaxHighlighter_print()
     if (!$zbp->option['ZC_SYNTAXHIGHLIGHTER_ENABLE']) {
         return;
     }
-    $tpl =<<<html
+    $tpl = <<<html
 <script src="{$zbp->host}zb_users/plugin/UEditor/third-party/prism/prism.js"><\\/script><link href="{$zbp->host}zb_users/plugin/UEditor/third-party/prism/prism.css"/>
 html;
 
@@ -31,9 +31,13 @@ html;
     echo "\r\n";
 }
 
-function InstallPlugin_UEditor() {}
+function InstallPlugin_UEditor()
+{
+}
 
-function UninstallPlugin_UEditor() {}
+function UninstallPlugin_UEditor()
+{
+}
 
 function ueditor_addscript_begin()
 {
@@ -64,24 +68,24 @@ function UEditor_CmdAjax($src)
 
     $has_insertcode = !empty($zbp->option['ZC_SYNTAXHIGHLIGHTER_ENABLE']);
 
-    $config = array(
+    $config = [
         'UEDITOR_HOME_URL' => $URL,
         'serverUrl'        => $URL . 'php/controller.php',
-        'toolbars'         => array(
-            array('source', '|', 'undo', 'redo', '|', 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'forecolor', 'backcolor', '|', 'insertorderedlist', 'insertunorderedlist', 'indent', 'justifyleft', 'justifycenter', 'justifyright', '|', 'removeformat', 'formatmatch', 'autotypeset', 'pasteplain'),
+        'toolbars'         => [
+            ['source', '|', 'undo', 'redo', '|', 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'forecolor', 'backcolor', '|', 'insertorderedlist', 'insertunorderedlist', 'indent', 'justifyleft', 'justifycenter', 'justifyright', '|', 'removeformat', 'formatmatch', 'autotypeset', 'pasteplain'],
             array_merge(
-                array('paragraph', 'fontfamily', 'fontsize', '|', 'emotion', 'link', 'insertimage', 'scrawl', 'insertvideo', 'attachment', 'spechars', 'map', '|'),
-                $has_insertcode ? array('insertcode') : array(),
-                array('blockquote', 'wordimage', 'inserttable', 'horizontal', 'fullscreen')
-            )
-        ),
+                ['paragraph', 'fontfamily', 'fontsize', '|', 'emotion', 'link', 'insertimage', 'scrawl', 'insertvideo', 'attachment', 'spechars', 'map', '|'],
+                $has_insertcode ? ['insertcode'] : [],
+                ['blockquote', 'wordimage', 'inserttable', 'horizontal', 'fullscreen'],
+            ),
+        ],
         'sourceEditor'           => !empty($zbp->option['ZC_CODEMIRROR_ENABLE']) ? 'codemirror' : 'textarea',
         'initialStyle'           => 'body{font-size:14px;font-family:微软雅黑，宋体，Arial,Helvetica,sans-serif;}',
         'imageMaxSize'           => $zbp->option['ZC_UPLOAD_FILESIZE'] * 1024 * 1024,
         'fileMaxSize'            => $zbp->option['ZC_UPLOAD_FILESIZE'] * 1024 * 1024,
         'lang'                   => $lang,
         'langPath'               => $URL . 'lang/',
-    );
+    ];
 
     JsonReturn($config);
 }

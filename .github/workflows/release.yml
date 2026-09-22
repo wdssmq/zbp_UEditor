@@ -22,11 +22,31 @@ jobs:
           php-version: '8.2'
           extensions: zlib, simplexml, json
 
+      - name: Extract Plugin ID
+        id: plugin
+        shell: bash
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+
+          if [[ "$REPO_NAME" != zbp_* ]]; then
+            echo "::error::仓库名必须为 zbp_<PluginID> 格式，当前为: $REPO_NAME"
+            exit 1
+          fi
+
+          PLUGIN_ID="${REPO_NAME#zbp_}"
+
+          if [[ -z "$PLUGIN_ID" ]]; then
+            echo "::error::未提取到 Plugin ID"
+            exit 1
+          fi
+
+          echo "plugin_id=$PLUGIN_ID" >> "$GITHUB_OUTPUT"
+
       - name: Pack ZBA Application
         id: pack
         uses: wdssmq/zbp-app-pack@v1
         with:
-          path: './UEditor'
+          path: './${{ steps.plugin.outputs.plugin_id }}'
           gzip: 'true'
           verbose: 'false'
 
